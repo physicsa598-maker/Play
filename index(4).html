@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>心动攻略计划 · 陈老师</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family:"PingFang SC","Microsoft YaHei",sans-serif;
+    background:#1a1a2e;
+    display:flex; justify-content:center; align-items:center;
+    min-height:100vh; overflow:hidden;
+  }
+  #stage {
+    position:relative; width:min(480px,100vw); height:min(860px,100vh);
+    background:linear-gradient(160deg,#f6d5e0 0%,#dfe9f3 50%,#f6d5e0 100%);
+    overflow:hidden; box-shadow:0 0 40px rgba(0,0,0,.5);
+  }
+  /* 场景图 */
+  #scene {
+    position:absolute; inset:0; background-size:cover; background-position:center;
+    transition:opacity .6s ease, background-image .6s ease;
+  }
+  #sceneImg { width:100%; height:100%; object-fit:cover; transition:opacity .5s; }
+  #sceneVideo { width:100%; height:100%; object-fit:cover; display:none; }
+  /* 标题 */
+  #titleScreen {
+    position:absolute; inset:0; z-index:10; display:flex; flex-direction:column;
+    justify-content:center; align-items:center; text-align:center; padding:24px;
+    background:linear-gradient(160deg,rgba(246,213,224,.95),rgba(223,233,243,.95));
+  }
+  #titleScreen h1 { font-size:2rem; color:#c2447e; margin-bottom:8px; letter-spacing:2px; }
+  #titleScreen p { color:#7a5c6b; margin-bottom:28px; }
+  #titleScreen img {
+    width:190px; height:190px; object-fit:cover; border-radius:50%;
+    border:4px solid #fff; box-shadow:0 8px 24px rgba(194,68,126,.35); margin-bottom:24px;
+  }
+  .btn {
+    display:block; width:230px; padding:13px 0; margin:9px auto; border:none; border-radius:30px;
+    font-size:1.05rem; cursor:pointer; transition:transform .15s, box-shadow .15s;
+    font-family:inherit;
+  }
+  .btn:hover { transform:translateY(-2px) scale(1.03); box-shadow:0 6px 16px rgba(194,68,126,.4); }
+  .btn-primary { background:#ff6fa5; color:#fff; }
+  .btn-ghost { background:rgba(255,255,255,.85); color:#c2447e; border:1.5px solid #ffb3cf; }
+  /* 对话框 */
+  #dialogBox {
+    position:absolute; left:0; right:0; bottom:0; z-index:5;
+    background:rgba(255,255,255,.92); backdrop-filter:blur(8px);
+    border-top-left-radius:22px; border-top-right-radius:22px;
+    padding:18px 20px 26px; min-height:190px; cursor:pointer;
+    box-shadow:0 -4px 20px rgba(0,0,0,.15);
+    transform:translateY(0); transition:transform .4s;
+  }
+  #dialogBox.hidden { transform:translateY(110%); }
+  #speaker {
+    display:inline-block; background:#ff6fa5; color:#fff; font-weight:bold;
+    padding:4px 18px; border-radius:16px; margin-bottom:10px; font-size:.95rem;
+  }
+  #text { font-size:1.05rem; line-height:1.7; color:#333; min-height:76px; }
+  #nextHint { text-align:right; color:#ff6fa5; font-size:.85rem; margin-top:8px; animation:blink 1s infinite; }
+  @keyframes blink { 50% { opacity:.25; } }
+  /* 选项 */
+  #choices { position:absolute; left:0; right:0; bottom:210px; z-index:6; padding:0 22px; }
+  .choice {
+    display:block; width:100%; text-align:left; padding:13px 18px; margin:10px 0;
+    border-radius:14px; border:2px solid #ffb3cf; background:rgba(255,255,255,.95);
+    font-size:1rem; cursor:pointer; transition:all .15s; font-family:inherit; color:#444;
+  }
+  .choice:hover { border-color:#ff6fa5; background:#fff0f6; transform:translateX(4px); }
+  /* 好感度条 */
+  #affection {
+    position:absolute; top:14px; left:14px; right:14px; z-index:8;
+    display:flex; align-items:center; gap:10px; pointer-events:none;
+  }
+  #affection .label { background:rgba(255,255,255,.85); border-radius:12px; padding:4px 12px;
+    color:#c2447e; font-size:.85rem; font-weight:bold; white-space:nowrap; }
+  #barOuter { flex:1; height:10px; background:rgba(255,255,255,.6); border-radius:6px; overflow:hidden; }
+  #barInner { height:100%; width:30%; border-radius:6px;
+    background:linear-gradient(90deg,#ffb3cf,#ff5c97); transition:width .6s ease; }
+  #hearts { position:absolute; inset:0; pointer-events:none; z-index:7; }
+  .heart { position:absolute; font-size:26px; animation:floatUp 1.4s ease-out forwards; }
+  @keyframes floatUp { to { transform:translateY(-120px); opacity:0; } }
+  /* 结局 */
+  #endingScreen {
+    position:absolute; inset:0; z-index:9; display:none; flex-direction:column;
+    justify-content:center; align-items:center; text-align:center; padding:28px;
+  }
+  #endingScreen.show { display:flex; }
+  #endingImg { width:230px; height:230px; object-fit:cover; border-radius:20px;
+    border:5px solid #fff; box-shadow:0 10px 30px rgba(0,0,0,.3); margin-bottom:22px; }
+  #endingTitle { font-size:1.7rem; color:#fff; text-shadow:0 2px 10px rgba(0,0,0,.6); margin-bottom:10px; }
+  #endingText { color:#fff; text-shadow:0 1px 6px rgba(0,0,0,.6); margin-bottom:24px; line-height:1.8; max-width:340px; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="scene">
+    <img id="sceneImg" src="chen_car.jpg" alt="">
+    <video id="sceneVideo" src="chen_mask.mp4" muted loop playsinline></video>
+  </div>
+
+  <div id="affection"><span class="label">💖 陈老师好感度</span><div id="barOuter"><div id="barInner"></div></div></div>
+  <div id="hearts"></div>
+
+  <!-- 标题界面 -->
+  <div id="titleScreen">
+    <h1>💗 心动攻略计划 💗</h1>
+    <p>目标人物：陈老师 —— 甜度超标预警！</p>
+    <img src="chen_bday.jpg" alt="陈老师">
+    <button class="btn btn-primary" onclick="startGame()">▶ 开始游戏</button>
+    <button class="btn btn-ghost" onclick="alert('很简单！\\n阅读对话 → 做出选择 → 提升陈老师好感度\\n好感度决定结局哦～')">📖 玩法说明</button>
+  </div>
+
+  <!-- 对话 -->
+  <div id="dialogBox" class="hidden" onclick="nextLine()">
+    <span id="speaker">？？？</span>
+    <div id="text"></div>
+    <div id="nextHint">▼ 点击继续</div>
+  </div>
+  <div id="choices"></div>
+
+  <!-- 结局 -->
+  <div id="endingScreen">
+    <img id="endingImg" src="" alt="">
+    <div id="endingTitle"></div>
+    <div id="endingText"></div>
+    <button class="btn btn-primary" onclick="restart()">🔁 再来一次</button>
+  </div>
+</div>
+
+<script>
+const scenes = {
+  car:    { img:"chen_car.jpg" },
+  hat:    { img:"chen_hat.jpg" },
+  mask:   { video:true },
+  bday:   { img:"chen_bday.jpg" },
+};
+
+// 剧情脚本: {s:场景, w:说话人, t:台词} 或 {choice:[{t,delta,go}]}
+const script = [
+  {s:"car", w:"旁白", t:"阳光明媚的午后，你听说陈老师在车里等大家，你深吸一口气走了过去……"},
+  {s:"car", w:"陈老师", t:"咦？是你呀～今天怎么有空来找我？🥰"},
+  {choice:[
+    {t:"「老师今天真好看，能坐你旁边吗？」", d:20, go:2},
+    {t:"「我……我就是路过的。」", d:-5, go:1},
+  ]},
+  {s:"car", w:"陈老师", t:"（笑）真是的，嘴这么甜。上来吧，正好想找人聊聊天呢。"},
+  {s:"car", w:"旁白", t:"你们聊得很开心，窗外的阳光都变得温柔起来。"},
+  {jump:4},
+  {s:"car", w:"陈老师", t:"路过？哼哼，小骗子，你耳朵都红了哦～（凑近看）"},
+  {s:"car", w:"旁白", t:"她戴着眼镜凑近看你，你心跳快得不行。"},
+  // idx7
+  {s:"hat", w:"旁白", t:"第二天，你发现陈老师发了一个奇怪的动态，点开一看……"},
+  {s:"hat", w:"陈老师", t:"哈哈哈哈哈这个特效太搞笑了！牛仔陈老师上线！🤠"},
+  {choice:[
+    {t:"「牛仔陈老师也太帅了吧，爱了爱了！」", d:20, go:2},
+    {t:"「老师，你这是什么鬼哈哈哈」", d:-5, go:1},
+  ]},
+  {s:"hat", w:"陈老师", t:"嘿嘿，就知道你有眼光～下次一起用这个特效拍一个？😎"},
+  {s:"hat", w:"旁白", t:"你们用同款特效拍了合照，笑成一团。"},
+  {jump:3},
+  {s:"hat", w:"陈老师", t:"哼，没品味！这个明明很帅的好吗！(￣^￣)"},
+  {s:"hat", w:"旁白", t:"她假装生气，但嘴角偷偷上扬。"},
+  // idx15
+  {s:"mask", w:"旁白", t:"周末，你在公园偶遇了全副武装防晒的陈老师。"},
+  {s:"mask", w:"陈老师", t:"（捂得严严实实，只露出眼睛）……你还认得出来是我吗？👀"},
+  {choice:[
+    {t:"「当然认得，老师的眼神全世界独一无二。」", d:20, go:2},
+    {t:"「认不出……这是哪位神秘人？」", d:-8, go:1},
+  ]},
+  {s:"mask", w:"陈老师", t:"（眼睛弯成月牙）算你有心～走，请你喝冰饮！🥤"},
+  {s:"mask", w:"旁白", t:"你们并肩走在树荫下，她的防晒衣悄悄蹭到了你的手。"},
+  {jump:3},
+  {s:"mask", w:"陈老师", t:"（眼睛瞪大）过分！白认识你这么久了！😤"},
+  {s:"mask", w:"旁白", t:"她假装快步走远，其实走得很慢很慢。"},
+  // idx23
+  {s:"bday", w:"旁白", t:"今天，是陈老师的生日。你带着礼物和小心意来到她面前……"},
+  {s:"bday", w:"陈老师", t:"哇！这个生日头箍和蛋糕玩偶好可爱！你怎么知道我喜欢这个！🥹"},
+  {choice:[
+    {t:"「因为我一直在偷偷关注着你呀。」", d:25, go:2},
+    {t:"「随便买的啦，别多想～」", d:-10, go:1},
+  ]},
+  {s:"bday", w:"陈老师", t:"（脸颊微红）……笨蛋。今天是生日，也是我最开心的一天。谢谢你。💗"},
+  {s:"bday", w:"旁白", t:"她戴上生日头箍，抱着玩偶对你笑了。这一刻，你明白了什么叫心动。"},
+  {jump:3},
+  {s:"bday", w:"陈老师", t:"（小声）……哼，随便买的也能这么合我心意吗？骗子。"},
+  {s:"bday", w:"旁白", t:"她嘴上嫌弃，却紧紧抱住了那个玩偶。"},
+  {s:"bday", w:"旁白", t:"生日会结束了，夕阳西下。陈老师突然转头看你……"},
+  {s:"bday", w:"陈老师", t:"呐，问你一个正经问题——这段时间，你为什么总是出现在我身边呀？☺️"},
+];
+
+let idx = 0, aff = 30, typing = null;
+
+function setScene(s) {
+  const video = document.getElementById('sceneVideo');
+  if (s.video) { video.style.display='block'; video.play(); }
+  else { video.style.display='none'; video.pause();
+    document.getElementById('sceneImg').src = scenes[s].img; }
+}
+
+function typeText(str, done) {
+  clearInterval(typing);
+  const el = document.getElementById('text');
+  el.textContent = ''; let i = 0;
+  typing = setInterval(() => {
+    el.textContent = str.slice(0, ++i);
+    if (i >= str.length) { clearInterval(typing); typing = null; done && done(); }
+  }, 30);
+}
+
+function render() {
+  if (idx >= script.length) return showEnding();
+  const node = script[idx];
+  if (node.jump !== undefined) { idx += node.jump; return render(); }
+  if (node.choice) return showChoices(node.choice);
+  setScene(scenes[node.s]);
+  document.getElementById('speaker').textContent = node.w;
+  document.getElementById('choices').innerHTML = '';
+  typeText(node.t);
+}
+
+function nextLine() {
+  const node = script[idx];
+  if (!node || node.choice) return;
+  if (typing) { // 点击跳过打字
+    clearInterval(typing); typing = null;
+    document.getElementById('text').textContent = node.t;
+    return;
+  }
+  idx++; render();
+}
+
+function showChoices(list) {
+  document.getElementById('choices').innerHTML = list.map((c,i)=>
+    `<button class="choice" onclick="pick(${i})">${c.t}</button>`).join('');
+}
+
+function pick(i) {
+  const node = script[idx];
+  const c = node.choice[i];
+  aff = Math.max(0, Math.min(100, aff + c.d));
+  updateBar();
+  if (c.d > 0) spawnHearts(c.d/5|0 || 1);
+  document.getElementById('choices').innerHTML = '';
+  idx += 1 + c.go;  // 跳过选项后续对话，跳到对应分支
+  render();
+}
+
+function updateBar() { document.getElementById('barInner').style.width = aff + '%'; }
+
+function spawnHearts(n) {
+  const box = document.getElementById('hearts');
+  for (let i=0;i<n;i++) {
+    const h = document.createElement('span');
+    h.className = 'heart'; h.textContent = ['💖','💕','✨','💗'][i%4];
+    h.style.left = (20 + Math.random()*60) + '%';
+    h.style.top = (55 + Math.random()*25) + '%';
+    box.appendChild(h);
+    setTimeout(()=>h.remove(), 1500);
+  }
+}
+
+function showEnding() {
+  document.getElementById('dialogBox').classList.add('hidden');
+  const es = document.getElementById('endingScreen');
+  const img = document.getElementById('endingImg');
+  const title = document.getElementById('endingTitle');
+  const txt = document.getElementById('endingText');
+  let good = aff >= 75;
+  let mid = aff >= 50 && aff < 75;
+  img.src = good ? 'chen_bday.jpg' : mid ? 'chen_car.jpg' : 'chen_hat.jpg';
+  title.textContent = good ? '💍 完美结局：心动达成！' : mid ? '💐 普通结局：温柔的朋友' : '😅 失败结局：路人甲';
+  txt.textContent = good
+    ? `最终好感度 ${aff} 分！陈老师红着脸牵起了你的手：「其实，我也注意你很久啦。」`
+    : mid
+    ? `最终好感度 ${aff} 分。你们成了无话不谈的好朋友，但似乎还差了那么一点点……`
+    : `最终好感度 ${aff} 分。陈老师把你当成了普通的熟人。少年，任重道远啊！`;
+  es.classList.add('show');
+}
+
+function startGame() {
+  document.getElementById('titleScreen').style.display = 'none';
+  document.getElementById('dialogBox').classList.remove('hidden');
+  idx = 0; aff = 30; updateBar();
+  render();
+}
+
+function restart() {
+  document.getElementById('endingScreen').classList.remove('show');
+  startGame();
+}
+</script>
+</body>
+</html>
