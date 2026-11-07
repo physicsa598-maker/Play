@@ -97,8 +97,8 @@
 <body>
 <div id="stage">
   <div id="scene">
-    <img id="sceneImg" src="chen_car.jpg" alt="">
-    <video id="sceneVideo" src="chen_mask.mp4" muted loop playsinline></video>
+    <img id="sceneImg" src="./chen_car.jpg" alt="">
+    <video id="sceneVideo" src="./chen_mask.mp4" muted loop playsinline></video>
   </div>
 
   <div id="affection"><span class="label">💖 陈老师好感度</span><div id="barOuter"><div id="barInner"></div></div></div>
@@ -108,7 +108,7 @@
   <div id="titleScreen">
     <h1>💗 心动攻略计划 💗</h1>
     <p>目标人物：陈老师 —— 甜度超标预警！</p>
-    <img src="chen_bday.jpg" alt="陈老师">
+    <img src="./chen_bday.jpg" alt="陈老师">
     <button class="btn btn-primary" onclick="startGame()">▶ 开始游戏</button>
     <button class="btn btn-ghost" onclick="alert('很简单！\\n阅读对话 → 做出选择 → 提升陈老师好感度\\n好感度决定结局哦～')">📖 玩法说明</button>
   </div>
@@ -132,10 +132,10 @@
 
 <script>
 const scenes = {
-  car:    { img:"chen_car.jpg" },
-  hat:    { img:"chen_hat.jpg" },
-  mask:   { video:true },
-  bday:   { img:"chen_bday.jpg" },
+  car:    { img:"./chen_car.jpg" },
+  hat:    { img:"./chen_hat.jpg" },
+  mask:   { img:"./chen_hat.jpg" }, /* 已将视频替换为图片，防止手机不兼容 */
+  bday:   { img:"./chen_bday.jpg" },
 };
 
 // 剧情脚本: {s:场景, w:说话人, t:台词} 或 {choice:[{t,delta,go}]}
@@ -270,7 +270,7 @@ function showEnding() {
   const txt = document.getElementById('endingText');
   let good = aff >= 75;
   let mid = aff >= 50 && aff < 75;
-  img.src = good ? 'chen_bday.jpg' : mid ? 'chen_car.jpg' : 'chen_hat.jpg';
+  img.src = good ? './chen_bday.jpg' : mid ? './chen_car.jpg' : './chen_hat.jpg';
   title.textContent = good ? '💍 完美结局：心动达成！' : mid ? '💐 普通结局：温柔的朋友' : '😅 失败结局：路人甲';
   txt.textContent = good
     ? `最终好感度 ${aff} 分！陈老师红着脸牵起了你的手：「其实，我也注意你很久啦。」`
